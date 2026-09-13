@@ -34,6 +34,7 @@
 - name: Обновить кеш apt после добавления репозитория
   ansible.builtin.apt:
     update_cache: true
+    force_apt_get: true
   when: docker_repo.changed
 
 - name: Установить Docker Engine

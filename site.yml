@@ -26,6 +26,12 @@
       ansible.builtin.apt:
         update_cache: true
         cache_valid_time: 3600
+        # force_apt_get: образ ВМ (Cloud.ru) содержит битый сторонний
+        # источник repo.mng.sbercloud.tech, который не резолвится даже
+        # с самого сервера. python-apt (бэкенд модуля по умолчанию) на
+        # любой недоступный источник падает фатально; apt-get update
+        # (как в консоли) на это только предупреждает и завершается 0.
+        force_apt_get: true
       tags: always
 
   roles:

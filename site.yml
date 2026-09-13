@@ -1,0 +1,35 @@
+---
+# =============================================================================
+#  Развёртывание блога yesinit.tech
+#
+#  Запуск:
+#    ansible-playbook site.yml
+#
+#  Сухой прогон (ничего не меняет, показывает разницу):
+#    ansible-playbook site.yml --check --diff
+#
+#  Только одна роль:
+#    ansible-playbook site.yml --tags docker
+#    ansible-playbook site.yml --tags ghost
+# =============================================================================
+
+- name: Развернуть блог
+  hosts: web
+  become: true
+
+  pre_tasks:
+    - name: Проверить доступность хоста
+      ansible.builtin.ping:
+      tags: always
+
+    - name: Обновить кеш apt
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      tags: always
+
+  roles:
+    - role: docker
+      tags: [docker]
+    - role: ghost
+      tags: [ghost]

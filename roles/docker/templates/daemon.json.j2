@@ -1,0 +1,8 @@
+{
+  "registry-mirrors": {{ docker_registry_mirrors | to_nice_json(indent=4) | indent(2) }},
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "{{ docker_log_max_size }}",
+    "max-file": "{{ docker_log_max_file }}"
+  }
+}

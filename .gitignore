@@ -1,3 +1,6 @@
+# Ansible: локально сгенерированные пароли (lookup 'password')
+.secrets/
+
 # Logs
 logs
 *.log

@@ -1,0 +1,42 @@
+---
+- name: Создать каталог развёртывания
+  ansible.builtin.file:
+    path: "{{ ghost_deploy_dir }}"
+    state: directory
+    owner: "{{ admin_user }}"
+    group: "{{ admin_user }}"
+    mode: "0750"
+
+- name: Выложить docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ ghost_deploy_dir }}/docker-compose.yml"
+    owner: "{{ admin_user }}"
+    group: "{{ admin_user }}"
+    mode: "0640"
+  register: compose_file
+
+- name: Выложить Caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: "{{ ghost_deploy_dir }}/Caddyfile"
+    owner: "{{ admin_user }}"
+    group: "{{ admin_user }}"
+    mode: "0640"
+  register: caddyfile
+
+- name: Поднять стек (docker compose up -d)
+  ansible.builtin.command:
+    cmd: docker compose up -d --remove-orphans
+    chdir: "{{ ghost_deploy_dir }}"
+  register: compose_up
+  changed_when: compose_file.changed or caddyfile.changed
+
+- name: Дождаться ответа Ghost изнутри контейнера
+  ansible.builtin.command:
+    cmd: docker exec {{ ghost_container_name }} wget -q -O /dev/null http://localhost:2368
+  register: ghost_check
+  retries: 10
+  delay: 5
+  until: ghost_check.rc == 0
+  changed_when: false

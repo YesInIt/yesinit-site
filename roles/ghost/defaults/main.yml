@@ -1,0 +1,22 @@
+---
+# =============================================================================
+#  ghost — Ghost 6 + MySQL 8 + Caddy в docker compose
+# =============================================================================
+
+ghost_image: ghost:6-alpine
+ghost_container_name: ghost
+
+mysql_image: mysql:8
+mysql_container_name: ghost-mysql
+
+caddy_image: caddy:2-alpine
+caddy_container_name: caddy
+
+ghost_db_name: ghost
+ghost_db_user: ghost
+
+# Пароли генерируются один раз lookup'ом 'password' и сохраняются в
+# deploy_secrets_dir (см. group_vars/all.yml) на управляющей машине —
+# при повторных прогонах переиспользуются, а не создаются заново.
+mysql_root_password: "{{ lookup('ansible.builtin.password', deploy_secrets_dir + '/mysql_root_password', length=32, chars=['ascii_letters', 'digits']) }}"
+ghost_db_password: "{{ lookup('ansible.builtin.password', deploy_secrets_dir + '/ghost_db_password', length=32, chars=['ascii_letters', 'digits']) }}"

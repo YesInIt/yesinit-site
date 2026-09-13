@@ -1,0 +1,32 @@
+---
+# =============================================================================
+#  docker — Docker Engine из официального репозитория
+# =============================================================================
+
+docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+
+docker_apt_key_url: https://download.docker.com/linux/ubuntu/gpg
+docker_apt_key_path: /etc/apt/keyrings/docker.asc
+docker_apt_repo_uri: https://download.docker.com/linux/ubuntu
+
+# Зеркала Docker Hub.
+# Прямой доступ к Docker Hub из РФ ограничен, образы тянем через зеркала.
+# Демон перебирает их по порядку до первого успешного ответа.
+docker_registry_mirrors:
+  - https://cr.yandex/mirror
+  - https://dh-mirror.gitverse.ru
+  - https://mirror.gcr.io
+
+# Ротация логов контейнеров. Без неё json-файлы растут без ограничений
+# и рано или поздно забивают диск.
+docker_log_max_size: "10m"
+docker_log_max_file: "3"
+
+# Кого пускать к docker без sudo.
+docker_users:
+  - "{{ admin_user }}"

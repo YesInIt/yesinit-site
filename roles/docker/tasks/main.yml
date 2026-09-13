@@ -1,0 +1,79 @@
+---
+# Установка по официальной инструкции:
+# https://docs.docker.com/engine/install/ubuntu/
+
+- name: Создать каталог для ключей apt
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Скачать GPG-ключ Docker
+  ansible.builtin.get_url:
+    url: "{{ docker_apt_key_url }}"
+    dest: "{{ docker_apt_key_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+# Формат deb822 — тот, который Docker использует в актуальной документации.
+- name: Подключить репозиторий Docker
+  ansible.builtin.deb822_repository:
+    name: docker
+    types: [deb]
+    uris: "{{ docker_apt_repo_uri }}"
+    suites: ["{{ ansible_distribution_release }}"]
+    components: [stable]
+    architectures: ["{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"]
+    signed_by: "{{ docker_apt_key_path }}"
+    state: present
+  register: docker_repo
+
+- name: Обновить кеш apt после добавления репозитория
+  ansible.builtin.apt:
+    update_cache: true
+  when: docker_repo.changed
+
+- name: Установить Docker Engine
+  ansible.builtin.apt:
+    name: "{{ docker_packages }}"
+    state: present
+
+- name: Настроить демон Docker
+  ansible.builtin.template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart docker
+
+- name: Запустить Docker
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Добавить пользователей в группу docker
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: docker
+    append: true
+  loop: "{{ docker_users }}"
+
+# -----------------------------------------------------------------------------
+# Проверки
+# -----------------------------------------------------------------------------
+- name: Собрать версии
+  ansible.builtin.command: "{{ item }}"
+  loop:
+    - docker --version
+    - docker compose version
+  register: docker_versions
+  changed_when: false
+
+- name: Показать версии
+  ansible.builtin.debug:
+    msg: "{{ docker_versions.results | map(attribute='stdout') | list }}"

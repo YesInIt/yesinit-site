@@ -1,0 +1,64 @@
+services:
+  mysql:
+    image: {{ mysql_image }}
+    container_name: {{ mysql_container_name }}
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "{{ mysql_root_password }}"
+      MYSQL_DATABASE: "{{ ghost_db_name }}"
+      MYSQL_USER: "{{ ghost_db_user }}"
+      MYSQL_PASSWORD: "{{ ghost_db_password }}"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p{{ mysql_root_password }}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ghost:
+    image: {{ ghost_image }}
+    container_name: {{ ghost_container_name }}
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      url: "https://{{ site_domain }}"
+      database__client: mysql
+      database__connection__host: mysql
+      database__connection__user: "{{ ghost_db_user }}"
+      database__connection__password: "{{ ghost_db_password }}"
+      database__connection__database: "{{ ghost_db_name }}"
+      NODE_ENV: production
+    volumes:
+      - ghost_content:/var/lib/ghost/content
+    networks:
+      - internal
+
+  caddy:
+    image: {{ caddy_image }}
+    container_name: {{ caddy_container_name }}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - internal
+    depends_on:
+      - ghost
+
+networks:
+  internal:
+
+volumes:
+  mysql_data:
+  ghost_content:
+  caddy_data:
+  caddy_config:

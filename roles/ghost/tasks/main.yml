@@ -33,8 +33,17 @@
   changed_when: compose_file.changed or caddyfile.changed
 
 - name: Дождаться ответа Ghost изнутри контейнера
+  # Ghost настроен с url: https://..., поэтому безусловно редиректит любой
+  # запрос без признака "пришёл через HTTPS-прокси" на https-версию сайта.
+  # wget внутри контейнера пошёл бы по этому редиректу наружу, за пределы
+  # docker-сети — и там ловил бы TLS-ошибки. Подставляем те же заголовки,
+  # что реально шлёт Caddy как reverse proxy, чтобы Ghost не редиректил.
   ansible.builtin.command:
-    cmd: docker exec {{ ghost_container_name }} wget -q -O /dev/null http://localhost:2368
+    cmd: >-
+      docker exec {{ ghost_container_name }} wget -q -O /dev/null
+      --header "Host: {{ site_domain }}"
+      --header "X-Forwarded-Proto: https"
+      http://localhost:2368
   register: ghost_check
   retries: 10
   delay: 5

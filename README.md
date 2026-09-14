@@ -146,13 +146,20 @@ ansible-playbook site.yml --tags backup-now   # прогнать бэкап ср
 ```bash
 sudo systemctl list-timers restic-backup.timer
 sudo journalctl -u restic-backup.service --since today
-sudo -E bash -c 'source /etc/restic/env && restic snapshots'
+sudo -E bash -c 'source /etc/restic/env && restic -o s3.bucket-lookup=dns snapshots'
 ```
+
+`-o s3.bucket-lookup=dns` нужен всегда: Cloud.ru Object Storage отдаёт объекты
+только по virtual-hosted-style адресам (`bucket.s3.cloud.ru`), а restic по
+умолчанию стучится path-style — без этой опции получите `Tenant does not
+exist`.
 
 ### Восстановление
 
 ```bash
 source /etc/restic/env
+alias restic='restic -o s3.bucket-lookup=dns'
+
 restic snapshots                              # найти нужный snapshot ID
 restic restore <snapshot-id> --target /tmp/restore
 

@@ -37,7 +37,11 @@ services:
       mail__options__port: "{{ mail_port }}"
       mail__options__secure: "{{ mail_secure }}"
       mail__options__auth__user: "{{ mail_user }}"
-      mail__options__auth__pass: "{{ mail_password }}"
+      # $ экранирован в $$: docker compose сам интерполирует "$VAR" в
+      # compose-файле, и незаэкранированный "$" в пароле мог быть принят
+      # за начало обращения к несуществующей переменной окружения и
+      # молча вырезан вместе с остатком строки.
+      mail__options__auth__pass: "{{ mail_password | replace('$', '$$') }}"
       mail__from: "{{ mail_from }}"
       NODE_ENV: production
     volumes:

@@ -1,6 +1,6 @@
 ---
 # =============================================================================
-#  Секреты для роли backup (S3 в Cloud.ru).
+#  Секреты (S3 в Cloud.ru для роли backup, SMTP-пароль для роли ghost).
 #
 #  Скопируйте этот файл в group_vars/all/vault.yml и заполните реальными
 #  значениями. group_vars/all/vault.yml — в .gitignore, в git не попадает.
@@ -10,7 +10,7 @@
 #  содержимое каталога group_vars/<группа>/, а произвольные имена файлов
 #  прямо в group_vars/ он не видит.
 #
-#  Где взять:
+#  Где взять S3-ключи:
 #    1. console.cloud.ru → Хранение данных → Object Storage →
 #       создать бакет (например, yesinit-tech-backups), доступ Private.
 #    2. Там же → "Параметры работы с API" — там указан tenant_id.
@@ -29,3 +29,7 @@ backup_s3_access_key: "<tenant_id>:<key_id>"
 
 # Key Secret из того же места, где создавали ключ доступа.
 backup_s3_secret_key: "<key_secret>"
+
+# Пароль почтового ящика noreply@<site_domain> на Timeweb (используется
+# ролью ghost для транзакционных писем — сброс пароля, приглашения и т.п.).
+mail_password: "<пароль от почтового ящика на Timeweb>"

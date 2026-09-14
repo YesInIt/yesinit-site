@@ -20,3 +20,14 @@ ghost_db_user: ghost
 # при повторных прогонах переиспользуются, а не создаются заново.
 mysql_root_password: "{{ lookup('ansible.builtin.password', deploy_secrets_dir + '/mysql_root_password', length=32, chars=['ascii_letters', 'digits']) }}"
 ghost_db_password: "{{ lookup('ansible.builtin.password', deploy_secrets_dir + '/ghost_db_password', length=32, chars=['ascii_letters', 'digits']) }}"
+
+# Транзакционная почта Ghost (сброс пароля, приглашения персонала, форма
+# обратной связи). Это НЕ рассылка/newsletter подписчикам: для неё Ghost
+# поддерживает только Mailgun, обычный SMTP для этого в принципе не
+# подходит — сюда не относится.
+#
+# Здесь — только сам транспорт, общий для любого SMTP. Конкретный ящик
+# (хост, порт, логин, e-mail) — переменные конкретного деплоя, они в
+# group_vars/all/main.yml, а не здесь: эта роль должна оставаться
+# переиспользуемой для любого сайта на Ghost, а не только для yesinit.tech.
+mail_transport: SMTP

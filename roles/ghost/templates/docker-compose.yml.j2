@@ -32,6 +32,13 @@ services:
       database__connection__user: "{{ ghost_db_user }}"
       database__connection__password: "{{ ghost_db_password }}"
       database__connection__database: "{{ ghost_db_name }}"
+      mail__transport: "{{ mail_transport }}"
+      mail__options__host: "{{ mail_host }}"
+      mail__options__port: "{{ mail_port }}"
+      mail__options__secure: "{{ mail_secure }}"
+      mail__options__auth__user: "{{ mail_user }}"
+      mail__options__auth__pass: "{{ mail_password }}"
+      mail__from: "{{ mail_from }}"
       NODE_ENV: production
     volumes:
       - ghost_content:/var/lib/ghost/content

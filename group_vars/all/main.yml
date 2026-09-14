@@ -20,3 +20,18 @@ ghost_deploy_dir: "/opt/{{ site_domain }}"
 # 'password' один раз сгенерирует и сохранит пароли для MySQL/Ghost.
 # В git не попадает, см. .gitignore.
 deploy_secrets_dir: "{{ playbook_dir }}/.secrets"
+
+# =============================================================================
+#  Почта (SMTP-ящик на Timeweb для транзакционных писем Ghost)
+#
+#  Индивидуальные для этого деплоя — не в роли ghost, чтобы роль
+#  оставалась переиспользуемой для другого сайта/провайдера почты.
+#  mail_password (секрет) — в group_vars/all/vault.yml.
+# =============================================================================
+mail_host: smtp.timeweb.ru
+mail_port: 465
+# Строка, а не YAML-boolean: Jinja превращает Python True в "True" (с
+# большой буквы), а Ghost/nodemailer ждёт ровно "true".
+mail_secure: "true"
+mail_user: "noreply@{{ site_domain }}"
+mail_from: "noreply@{{ site_domain }}"

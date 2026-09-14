@@ -2,7 +2,7 @@
 .secrets/
 
 # Ansible: реальные секреты для роли backup (S3-ключи Cloud.ru)
-group_vars/vault.yml
+group_vars/all/vault.yml
 
 # Logs
 logs

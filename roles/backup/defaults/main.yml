@@ -4,12 +4,17 @@
 # =============================================================================
 
 # Cloud.ru Object Storage (S3e), см. group_vars/all/vault.yml.example.
-backup_s3_endpoint: https://s3.cloud.ru
+#
+# ВАЖНО: без схемы (без "https://") и с подпапкой внутри бакета — так
+# рекомендует сам Cloud.ru для restic. С "https://" в repository string
+# restic падает с "client.MakeBucket: Tenant does not exist", хотя тот же
+# ключ и бакет отлично работают через обычный S3 API (aws-cli и т.п.).
+backup_s3_endpoint: s3.cloud.ru
 backup_s3_region: ru-central-1
 # backup_s3_bucket / backup_s3_access_key / backup_s3_secret_key —
 # задаются в group_vars/all/vault.yml (в git не попадает).
 
-backup_s3_repo: "s3:{{ backup_s3_endpoint }}/{{ backup_s3_bucket }}"
+backup_s3_repo: "s3:{{ backup_s3_endpoint }}/{{ backup_s3_bucket }}/yesinit-tech-backup"
 
 # Пароль шифрования репозитория restic. Генерируется один раз и
 # сохраняется в deploy_secrets_dir (см. group_vars/all/main.yml), как и

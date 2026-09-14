@@ -2,8 +2,13 @@
 # =============================================================================
 #  Секреты для роли backup (S3 в Cloud.ru).
 #
-#  Скопируйте этот файл в group_vars/vault.yml и заполните реальными
-#  значениями. group_vars/vault.yml — в .gitignore, в git не попадает.
+#  Скопируйте этот файл в group_vars/all/vault.yml и заполните реальными
+#  значениями. group_vars/all/vault.yml — в .gitignore, в git не попадает.
+#
+#  Важно: файл должен лежать именно в group_vars/all/ (а не просто в
+#  group_vars/) — Ansible автозагружает group_vars/<группа>.yml или всё
+#  содержимое каталога group_vars/<группа>/, а произвольные имена файлов
+#  прямо в group_vars/ он не видит.
 #
 #  Где взять:
 #    1. console.cloud.ru → Хранение данных → Object Storage →

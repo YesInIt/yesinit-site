@@ -119,7 +119,7 @@ docker logs caddy --tail 50         # без ошибок ACME
 3. Правый верхний угол → профиль → **Мои учётные данные** → вкладка
    **Ключи доступа** → **Создать ключ доступа** — сохранить `Key ID` и
    `Key Secret` (Key Secret показывается один раз).
-4. Скопировать `group_vars/vault.yml.example` → `group_vars/vault.yml`
+4. Скопировать `group_vars/all/vault.yml.example` → `group_vars/all/vault.yml`
    (в `.gitignore`, в git не попадает) и заполнить:
    ```yaml
    backup_s3_bucket: yesinit-tech-backups

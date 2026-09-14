@@ -3,16 +3,16 @@
 #  backup — restic → S3 (Cloud.ru Object Storage)
 # =============================================================================
 
-# Cloud.ru Object Storage (S3e), см. group_vars/vault.yml.example.
+# Cloud.ru Object Storage (S3e), см. group_vars/all/vault.yml.example.
 backup_s3_endpoint: https://s3.cloud.ru
 backup_s3_region: ru-central-1
 # backup_s3_bucket / backup_s3_access_key / backup_s3_secret_key —
-# задаются в group_vars/vault.yml (в git не попадает).
+# задаются в group_vars/all/vault.yml (в git не попадает).
 
 backup_s3_repo: "s3:{{ backup_s3_endpoint }}/{{ backup_s3_bucket }}"
 
 # Пароль шифрования репозитория restic. Генерируется один раз и
-# сохраняется в deploy_secrets_dir (см. group_vars/all.yml), как и
+# сохраняется в deploy_secrets_dir (см. group_vars/all/main.yml), как и
 # пароли MySQL/Ghost.
 #
 # ВАЖНО: в отличие от паролей MySQL/Ghost этот нельзя просто

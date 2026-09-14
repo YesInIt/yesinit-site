@@ -1,0 +1,33 @@
+---
+# =============================================================================
+#  backup — restic → S3 (Cloud.ru Object Storage)
+# =============================================================================
+
+# Cloud.ru Object Storage (S3e), см. group_vars/vault.yml.example.
+backup_s3_endpoint: https://s3.cloud.ru
+backup_s3_region: ru-central-1
+# backup_s3_bucket / backup_s3_access_key / backup_s3_secret_key —
+# задаются в group_vars/vault.yml (в git не попадает).
+
+backup_s3_repo: "s3:{{ backup_s3_endpoint }}/{{ backup_s3_bucket }}"
+
+# Пароль шифрования репозитория restic. Генерируется один раз и
+# сохраняется в deploy_secrets_dir (см. group_vars/all.yml), как и
+# пароли MySQL/Ghost.
+#
+# ВАЖНО: в отличие от паролей MySQL/Ghost этот нельзя просто
+# перегенерировать при потере — без него зашифрованные снапшоты в S3
+# не расшифровать НИКАК. Скопируйте .secrets/restic_password в
+# менеджер паролей отдельно от репозитория и сервера.
+restic_password: "{{ lookup('ansible.builtin.password', deploy_secrets_dir + '/restic_password', length=40, chars=['ascii_letters', 'digits']) }}"
+
+backup_env_path: /etc/restic/env
+backup_script_path: /usr/local/bin/yesinit-backup.sh
+
+# Что храним и сколько.
+backup_keep_daily: 7
+backup_keep_weekly: 4
+backup_keep_monthly: 6
+
+# systemd OnCalendar. По умолчанию — раз в сутки в 03:30 UTC.
+backup_schedule: "*-*-* 03:30:00"

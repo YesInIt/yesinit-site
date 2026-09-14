@@ -1,0 +1,8 @@
+[Unit]
+Description=Restic backup yesinit.tech (MySQL + Ghost content) -> S3
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart={{ backup_script_path }}

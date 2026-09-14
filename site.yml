@@ -11,6 +11,11 @@
 #  Только одна роль:
 #    ansible-playbook site.yml --tags docker
 #    ansible-playbook site.yml --tags ghost
+#    ansible-playbook site.yml --tags backup
+#
+#  Прогнать бэкап прямо сейчас (обычный прогон только выкладывает
+#  конфигурацию и таймер, сам бэкап ждёт расписания):
+#    ansible-playbook site.yml --tags backup-now
 # =============================================================================
 
 - name: Развернуть блог
@@ -39,3 +44,5 @@
       tags: [docker]
     - role: ghost
       tags: [ghost]
+    - role: backup
+      tags: [backup]

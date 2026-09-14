@@ -1,0 +1,66 @@
+---
+- name: Установить restic
+  ansible.builtin.apt:
+    name: restic
+    state: present
+
+- name: Создать каталог для restic env-файла
+  ansible.builtin.file:
+    path: "{{ backup_env_path | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Выложить restic env (креды S3 + пароль шифрования)
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ backup_env_path }}"
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Выложить скрипт бэкапа
+  ansible.builtin.template:
+    src: backup.sh.j2
+    dest: "{{ backup_script_path }}"
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Выложить systemd unit сервиса
+  ansible.builtin.template:
+    src: restic-backup.service.j2
+    dest: /etc/systemd/system/restic-backup.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Выложить systemd unit таймера
+  ansible.builtin.template:
+    src: restic-backup.timer.j2
+    dest: /etc/systemd/system/restic-backup.timer
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: Flush handlers (применить systemd unit'ы перед запуском таймера)
+  ansible.builtin.meta: flush_handlers
+
+- name: Включить и запустить таймер
+  ansible.builtin.systemd:
+    name: restic-backup.timer
+    enabled: true
+    state: started
+
+# Обычный прогон плейбука бэкап не запускает — только выкладывает
+# конфигурацию. Первый прогон бэкапа — вручную:
+#   ansible-playbook site.yml --tags backup-now
+- name: Прогнать бэкап прямо сейчас (проверка)
+  ansible.builtin.systemd:
+    name: restic-backup.service
+    state: started
+  changed_when: true
+  tags: [backup-now, never]

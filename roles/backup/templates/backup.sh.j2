@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Сгенерировано Ansible (roles/backup) — не редактировать руками на сервере.
+set -euo pipefail
+
+# shellcheck disable=SC1091
+source {{ backup_env_path }}
+
+workdir=$(mktemp -d)
+trap 'rm -rf "$workdir"' EXIT
+
+# Дамп MySQL. Пароль root ansible нигде не передаёт — берём его из env
+# самого контейнера, куда он уже положен docker-compose.
+docker exec {{ mysql_container_name }} \
+  sh -c 'exec mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" --all-databases' \
+  > "$workdir/mysql-all-databases.sql"
+
+# Контент Ghost (темы, изображения, данные) — копируем из контейнера,
+# не завязываясь на имя docker-тома.
+docker cp {{ ghost_container_name }}:/var/lib/ghost/content "$workdir/ghost-content"
+
+restic snapshots >/dev/null 2>&1 || restic init
+
+restic backup "$workdir/mysql-all-databases.sql" "$workdir/ghost-content" \
+  --tag yesinit-site
+
+restic forget \
+  --keep-daily {{ backup_keep_daily }} \
+  --keep-weekly {{ backup_keep_weekly }} \
+  --keep-monthly {{ backup_keep_monthly }} \
+  --prune

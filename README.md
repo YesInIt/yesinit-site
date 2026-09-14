@@ -12,6 +12,7 @@
 | `group_vars/` | общие переменные |
 | `roles/docker` | Docker Engine + compose-плагин из официального репозитория |
 | `roles/ghost` | docker compose: Ghost 6, MySQL 8, Caddy |
+| `roles/backup` | restic → S3 (Cloud.ru Object Storage) по расписанию |
 | `site.yml` | основной плейбук |
 
 ## Как это работает
@@ -95,6 +96,76 @@ docker logs caddy --tail 50         # без ошибок ACME
 `docker` без `sudo` заработает после повторного входа по SSH: членство в
 группе применяется к новой сессии.
 
+## Бэкапы
+
+`roles/backup` ставит `restic` и systemd-таймер, который раз в сутки (по
+умолчанию 03:30 UTC):
+
+1. снимает дамп всех баз MySQL (`docker exec ghost-mysql mysqldump`);
+2. копирует контент Ghost из контейнера (`docker cp ghost:/var/lib/ghost/content`);
+3. кладёт оба зашифрованным снапшотом в S3-бакет Cloud.ru Object Storage;
+4. подчищает старые снапшоты (`--keep-daily 7 --keep-weekly 4 --keep-monthly 6`).
+
+Юнит-файлы: `/etc/systemd/system/restic-backup.{service,timer}`, скрипт —
+`/usr/local/bin/yesinit-backup.sh`, креды — `/etc/restic/env` (root:root,
+0600).
+
+### Настройка перед первым запуском роли
+
+1. В [console.cloud.ru](https://console.cloud.ru) → **Хранение данных →
+   Object Storage** — создать бакет (например, `yesinit-tech-backups`),
+   доступ `Private`.
+2. Там же, **Параметры работы с API** — посмотреть `tenant_id`.
+3. Правый верхний угол → профиль → **Мои учётные данные** → вкладка
+   **Ключи доступа** → **Создать ключ доступа** — сохранить `Key ID` и
+   `Key Secret` (Key Secret показывается один раз).
+4. Скопировать `group_vars/vault.yml.example` → `group_vars/vault.yml`
+   (в `.gitignore`, в git не попадает) и заполнить:
+   ```yaml
+   backup_s3_bucket: yesinit-tech-backups
+   backup_s3_access_key: "<tenant_id>:<key_id>"
+   backup_s3_secret_key: "<key_secret>"
+   ```
+
+Пароль шифрования репозитория restic (`restic_password`) генерируется
+автоматически, как и пароли MySQL/Ghost, и сохраняется в `.secrets/`.
+**В отличие от них он критичен** — без него зашифрованные снапшоты в S3
+не восстановить никак, даже с доступом к самому бакету. Скопируйте
+`.secrets/restic_password` в отдельный менеджер паролей, не полагаясь
+только на диск управляющей машины.
+
+### Запуск
+
+```bash
+ansible-playbook site.yml --tags backup       # выложить конфигурацию и таймер
+ansible-playbook site.yml --tags backup-now   # прогнать бэкап сразу, для проверки
+```
+
+Проверить на сервере:
+
+```bash
+sudo systemctl list-timers restic-backup.timer
+sudo journalctl -u restic-backup.service --since today
+sudo -E bash -c 'source /etc/restic/env && restic snapshots'
+```
+
+### Восстановление
+
+```bash
+source /etc/restic/env
+restic snapshots                              # найти нужный snapshot ID
+restic restore <snapshot-id> --target /tmp/restore
+
+# база — накатить дамп обратно в контейнер:
+docker exec -i ghost-mysql sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' \
+  < /tmp/restore/tmp/*/mysql-all-databases.sql
+
+# контент Ghost — скопировать обратно в контейнер (сервис можно не
+# останавливать, Ghost подхватит файлы, но безопаснее сделать это при
+# остановленном контейнере):
+docker cp /tmp/restore/tmp/*/ghost-content/. ghost:/var/lib/ghost/content/
+```
+
 ## Известная особенность: ufw и Docker
 
 Docker пишет правила напрямую в iptables и обходит ufw (актуально, когда роль
@@ -106,6 +177,5 @@ Caddy — Ghost и MySQL сидят в изолированной docker-сет�
 - [ ] роль `common` / `security` — sshd hardening, ufw, fail2ban (были в
       прошлой версии репозитория, здесь пока сознательно убраны ради
       простоты первого запуска)
-- [ ] роль `backup` — restic по расписанию (тома `mysql_data`, `ghost_content`)
 - [ ] `ansible-pull` по таймеру вместо ручного запуска
 - [ ] учения по восстановлению

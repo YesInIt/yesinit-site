@@ -1,0 +1,9 @@
+[Unit]
+Description=Ежедневный restic-бэкап yesinit.tech
+
+[Timer]
+OnCalendar={{ backup_schedule }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target
